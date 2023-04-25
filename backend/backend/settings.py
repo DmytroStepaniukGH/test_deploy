@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-eaiej)8#r^apizu%m-*ebg8_ktrlu)+!!m3a!8)@-zbzo(d-*f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -38,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'base',
     'users',
     'accounts',
@@ -52,6 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -124,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Europe/Kyiv'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -156,17 +160,32 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Polyclinic API',
-    'DESCRIPTION': 'API for polyclinic',
+    'DESCRIPTION': '',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+#REDIS
+
+CELERY_BROKER_URL = "redis://default:Q8cGt0IIfTkQ1M2aDZIfTkzALcBfw2Pr@redis-15733.c250.eu-central-1-1.ec2.cloud.redislabs.com:15733"
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3030',
+]
+
 
 # Celery
 
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24
 REGISTRATION_CONFIRM = 60 * 60 * 24
 
-FRONTEND_HOST = 'http://127.0.0.1:8000'
+FRONTEND_HOST = 'https://dimastepaniuk.pythonanywhere.com'
 FRONTEND_PASSWORD_RESET_PATH = '/password-reset-confirm/{uid}/{token}'
 FRONTEND_REGISTRATION_CONFIRM_PATH = '/register-user-confirm/{uid}/{token}'
 
@@ -178,8 +197,8 @@ MEDIA_URL = '/media/'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'millarissa.valdes@gmail.com'
-EMAIL_HOST_PASSWORD = 'hnhvsdyahetuwbdw'
+EMAIL_HOST_USER = 'dima.stepaniuk.am4@gmail.com'
+EMAIL_HOST_PASSWORD = 'fkoviigviohzhjjd'
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 

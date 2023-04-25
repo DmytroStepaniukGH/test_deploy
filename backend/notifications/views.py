@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 )
 class NotificationsListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Notification.objects.all()
+    queryset = Notification.objects.order_by('-id').all()
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
@@ -27,7 +27,7 @@ class NotificationsListView(generics.ListAPIView):
 )
 class UnreadNotificationsListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Notification.objects.all()
+    queryset = Notification.objects.order_by('-id').all()
     serializer_class = NotificationSerializer
 
     def get_queryset(self):

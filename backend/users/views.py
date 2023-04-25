@@ -93,7 +93,7 @@ class CloseAppointmentView(generics.UpdateAPIView):
 
     def put(self, request, *args, **kwargs):
         doctor = self.request.user.doctor
-        #new_status = self.request.data.get('status')
+        # new_status = self.request.data.get('status')
         appointment_id = self.request.parser_context.get('kwargs')['appointment_id']
         medical_history = self.request.data.get('medical_history')
         objective_status = self.request.data.get('objective_status')
@@ -105,9 +105,8 @@ class CloseAppointmentView(generics.UpdateAPIView):
 
         if appointment:
             if appointment.update(status='Завершений', medical_history=medical_history,
-                               objective_status=objective_status, diagnosis=diagnosis,
-                               examination=examination, recommendations=recommendations):
-
+                                  objective_status=objective_status, diagnosis=diagnosis,
+                                  examination=examination, recommendations=recommendations):
                 notification = Notification(patient=appointment[0].patient, title='Оцініть ваш візит',
                                             text=f'Дякуємо за візит до нашої поліклініки! '
                                                  f'Будь ласка, оцініть ваш візит до лікаря '
@@ -156,7 +155,8 @@ class AvailableSlotsView(APIView):
             date = datetime.strptime(date_str, '%Y-%m-%d').date()
 
         except ValueError:
-            return Response({'error': 'Invalid date format. Please use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid date format. Please use YYYY-MM-DD.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         available_slots = doctor.get_available_slots(date)
 
@@ -253,12 +253,14 @@ class SetUnavailableTimeView(APIView):
             date_to_cancel = datetime.strptime(date_to_set_unavailable, '%Y-%m-%d').date()
 
         except ValueError:
-            return Response({'error': 'Invalid date format. Please use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid date format. Please use YYYY-MM-DD.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         doctor = Doctor.objects.get(user=self.request.user)
         doctor.set_unavailable_time(date_to_set_unavailable, time_to_set_unavailable)
 
-        return Response(f'Time {date_to_cancel} {time_to_set_unavailable} has been set unavailable', status=status.HTTP_200_OK)
+        return Response(f'Time {date_to_cancel} {time_to_set_unavailable} has been set unavailable',
+                        status=status.HTTP_200_OK)
 
 
 @extend_schema(
@@ -283,6 +285,7 @@ class AllSpecializations(viewsets.ReadOnlyModelViewSet):
         queryset = Specialization.objects.all()
 
         return queryset
+
 
 @extend_schema(
     tags=['Doctors']

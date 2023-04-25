@@ -6,6 +6,7 @@ from reviews.models import Review # noqa
 class AppointmentSerializer(serializers.ModelSerializer):
     # user_id = serializers.SerializerMethodField()
     patient = serializers.CharField(source='patient.user.get_full_name')
+    patient_id = serializers.IntegerField(source='patient.id')
     doctor = serializers.CharField(source='doctor.user.get_full_name')
     price = serializers.CharField(source='doctor.price')
     phone_num = serializers.CharField(source='patient.user.phone_num')
@@ -21,6 +22,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'time',
             'price',
             'patient',
+            'patient_id',
             'phone_num',
             'card_id',
             'doctor',
