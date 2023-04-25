@@ -1,0 +1,4 @@
+django==4.1.7
+Pillow==9.4.0
+djangorestframework==3.14.0
+drf-spectacular==0.26.1
