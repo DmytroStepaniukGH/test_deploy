@@ -19,7 +19,7 @@ class DoctorReviewListView(ListAPIView):
 
     def get_queryset(self):
         doctor_id = self.request.parser_context.get('kwargs')['doctor_id']
-        queryset_filter = super().get_queryset().filter(
+        queryset_filter = super().get_queryset().order_by('-created_at').filter(
             doctor_id=doctor_id
         )
 

@@ -15,3 +15,4 @@ class Review(models.Model):
     doctor = models.ForeignKey(to='users.Doctor', on_delete=models.CASCADE, default=1)
     review_rating = models.IntegerField(verbose_name='Оцінка', default=5, choices=RATING_CHOICES)
     review_text = models.CharField(verbose_name='Відгук', max_length=2000)
+    created_at = models.DateTimeField(verbose_name='Дата створення', auto_now_add=True)

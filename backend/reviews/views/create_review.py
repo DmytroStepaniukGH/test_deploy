@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
@@ -32,7 +34,7 @@ class CreateReviewView(CreateAPIView):
                 serializer.is_valid(raise_exception=True)
                 serializer.save(
                     appointment_id=appointment_id,
-                    doctor_id=appointment.doctor_id
+                    doctor_id=appointment.doctor_id,
                 )
 
             return Response(status=status.HTTP_200_OK)
