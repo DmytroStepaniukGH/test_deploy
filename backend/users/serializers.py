@@ -1,10 +1,9 @@
 from rest_framework import serializers
-from .models import Appointment, Doctor, DoctorUnavailableTime, Specialization, Media
+from users.models import Appointment, Doctor, DoctorUnavailableTime, Specialization, Media
 from reviews.models import Review # noqa
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
-    # user_id = serializers.SerializerMethodField()
     patient = serializers.CharField(source='patient.user.get_full_name')
     patient_id = serializers.IntegerField(source='patient.id')
     doctor = serializers.CharField(source='doctor.user.get_full_name')
@@ -34,10 +33,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'examination',
             'recommendations'
         )
-
-    # def get_user_id(self, obj):
-    #     user_id = self.context['request'].user.id
-    #     return user_id
 
 
 class CloseAppointmentSerializer(serializers.ModelSerializer):
@@ -92,7 +87,11 @@ class DoctorListSerializer(serializers.ModelSerializer):
 class SpecializationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialization
-        fields = ('name', 'image')
+        fields = (
+            'id',
+            'name',
+            'image',
+        )
 
 
 class SearchSerializer(serializers.ModelSerializer):

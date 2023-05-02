@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
-from reviews.serializers.create_review import CreateReviewSerialiser # noqa
+from reviews.serializers.create_review import CreateReviewSerializer # noqa
 from reviews.models import Review # noqa
 from users.models import Appointment # noqa
 
@@ -19,7 +19,7 @@ from users.models import Appointment # noqa
 class CreateReviewView(CreateAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = [BasicAuthentication, TokenAuthentication]
-    serializer_class = CreateReviewSerialiser
+    serializer_class = CreateReviewSerializer
 
     def create(self, request, *args, **kwargs):
         appointment_id = self.request.parser_context.get('kwargs')['appointment_id']

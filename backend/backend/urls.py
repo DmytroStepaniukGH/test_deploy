@@ -28,6 +28,7 @@ urlpatterns = [
          name='password-reset-confirm'),
     path('register-user-confirm/<str:uid>/<str:token>', ConfirmRegistrationView.as_view(),
          name='register-user-confirm'),
+    path('__debug__/', include('debug_toolbar.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

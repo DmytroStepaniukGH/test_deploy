@@ -37,7 +37,7 @@ SPECIALIZATION_CHOICES = (
     ("Дерматолог", "Дерматолог"),
     ("Кардіолог", "Кардіолог"),
     ("Пульмонолог", "Пульмонолог"),
-    ("Нейрологія", "Нейрологія"),
+    ("Невролог", "Невролог"),
     ("Терапевт", "Терапевт"),
     ("Гастроентеролог", "Гастроентеролог"),
 )
@@ -47,15 +47,13 @@ class Patient(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.user.last_name} {self.user.first_name} {self.user.patronim_name}'
+        return f'{self.user.get_full_name()}'
 
     def create_appointment(self, doctor_id, date, time):
         check_another_appointment = Appointment.objects.filter(patient=self, date=date, time=time)
 
         if check_date_time(date, time):
-
             doctor = Doctor.objects.get(id=doctor_id)
-
             unavailable_times = doctor.unavailable_time.filter(date=date).values_list('time', flat=True)
 
             if not check_another_appointment:
@@ -64,12 +62,12 @@ class Patient(models.Model):
                     appointment.save()
                     return f'Appointment at {date} {time} has been created successfully'
                 else:
-                    return f'Error: time {time} on {date} has been marked by doctor as unavailable'
+                    raise f'Error: time {time} on {date} has been marked by doctor as unavailable'
             else:
-                return f'Error: you already have another appointment at {time} on {date}'
+                raise f'Error: you already have another appointment at {time} on {date}'
 
         else:
-            return 'Date/time not valid'
+            raise 'Date/time not valid'
 
 
 class Specialization(models.Model):

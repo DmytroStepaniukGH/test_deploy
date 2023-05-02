@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema
 from accounts.serializers.registration import RegistrationSerializer # noqa
 from accounts.serializers.registration import ConfirmRegistrationSerializer # noqa
 from accounts.tasks import send_email_for_registration_confirm # noqa
+from accounts.models import User # noqa
 
 
 @extend_schema(
@@ -23,9 +24,15 @@ class RegistrationView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user_model = get_user_model()
         if serializer.is_valid():
-            user = serializer.save()
-            send_email_for_registration_confirm.apply_async(args=(user.pk,))
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            if User.objects.filter(email=request.data['email']).exists():
+                return Response(
+                    {"error": "User with this email is already registered."},
+                    status=status.HTTP_409_CONFLICT
+                )
+            else:
+                user = serializer.save()
+                send_email_for_registration_confirm.apply_async(args=(user.pk,))
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(
@@ -41,4 +48,3 @@ class ConfirmRegistrationView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-

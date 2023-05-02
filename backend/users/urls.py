@@ -2,7 +2,7 @@ from django.urls import path
 from .views import CreateAppointmentView, AppointmentListView, AvailableSlotsView, AllSpecializations, \
     DoctorsListViewSet, SearchAPIView, FilterDoctors, CancelAppointmentView, SetUnavailableTimeView, \
     CloseAppointmentView, DoctorView, MediaCreateRetrieve, ActiveAppointmentListView, ActiveAppointmentView, \
-    ConfirmAppointmentView, UnconfirmedAppointmentListView
+    ConfirmAppointmentView, UnconfirmedAppointmentListView, FilterActiveAppointmentListView
 
 from reviews.views.reviews_doctor import DoctorReviewListView
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('active-appointments/appointment-<int:appointment_id>', ActiveAppointmentView.as_view(), name='active-appointment'),
     path('active-appointments/appointment-<int:appointment_id>/close', CloseAppointmentView.as_view(), name='close-appointment'),
     path('active-appointments/', ActiveAppointmentListView.as_view(), name='active-appointments'),
+    path('active-appointments/filter/specialization-<int:specialization_id>', FilterActiveAppointmentListView.as_view(), name='filter-active-appointments'),
     path('available-slots/<int:doctor_id>/<str:date>', AvailableSlotsView.as_view(), name='available-slots'),
     path('new-appointment/<int:doctor_id>/<str:date>/<str:time>', CreateAppointmentView.as_view(), name='new-appointment'),
     path('confirm-appointment/<int:appointment_id>', ConfirmAppointmentView.as_view(), name='confirm-appointment'),
@@ -23,6 +24,6 @@ urlpatterns = [
     path('doctors/doctor-<int:doctor_id>', DoctorView.as_view(), name='doctor'),
     path('doctors/doctor-<int:doctor_id>/reviews', DoctorReviewListView.as_view(), name='doctor-reviews'),
     path('search/', SearchAPIView.as_view(), name='search'),
-    path('filter-doctors/<str:specialization>', FilterDoctors.as_view({'get': 'list'}), name='filter-doctors'),
+    path('filter-doctors/<int:specialization_id>', FilterDoctors.as_view({'get': 'list'}), name='filter-doctors'),
     #path('doctor/change-photo/', MediaCreateRetrieve.as_view({'post': 'create'}), name='change-photo'),
 ]
