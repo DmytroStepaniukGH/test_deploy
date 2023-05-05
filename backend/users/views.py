@@ -1,20 +1,26 @@
 from datetime import datetime
 
+from django.db.models import Avg, Value, FloatField
+from django.db.models.functions import Coalesce
 from drf_spectacular.utils import extend_schema
+
 from rest_framework import generics, status, viewsets, filters
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
-
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
-from .models import Appointment, Doctor, Patient, Specialization, Media
-from .serializers import AppointmentSerializer, DoctorListSerializer, SpecializationsSerializer, \
+from users.models import Appointment, Doctor, Patient, Specialization, Media
+from users.serializers import AppointmentSerializer, DoctorListSerializer, SpecializationsSerializer, \
     SetUnavailableTimeSerializer, CreateAppointmentSerializer, MediaSerializer, CloseAppointmentSerializer
+
 from notifications.models import Notification
 
+from users.models import check_date_time
+
+from users.choises import StatusChoices
 
 """
 APPOINTMENTS
@@ -44,17 +50,18 @@ class AppointmentListView(generics.ListAPIView):
 class ActiveAppointmentListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
 
-    queryset = Appointment.objects.all().select_related('patient__card').\
-        select_related('doctor__specialization').\
-        select_related('patient__user').select_related('doctor__user')
+    queryset = Appointment.objects.select_related('doctor__specialization',
+                                                  'doctor__user',
+                                                  'patient__card',
+                                                  'patient__user')
 
     serializer_class = AppointmentSerializer
 
     def get_queryset(self):
         if self.request.user.is_doctor:
-            return super().get_queryset().filter(doctor_id=self.request.user.doctor, status='Активний')
+            return super().get_queryset().filter(doctor_id=self.request.user.doctor.id, status=StatusChoices.ACTIVE)
 
-        return super().get_queryset().filter(patient_id=self.request.user.patient, status='Активний')
+        return super().get_queryset().filter(patient_id=self.request.user.patient.id, status=StatusChoices.ACTIVE)
 
 
 @extend_schema(
@@ -63,9 +70,10 @@ class ActiveAppointmentListView(generics.ListAPIView):
 )
 class FilterActiveAppointmentListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Appointment.objects.all().select_related('patient__card').\
-        select_related('doctor__specialization').\
-        select_related('patient__user').select_related('doctor__user')
+    queryset = Appointment.objects.select_related('patient__card',
+                                                  'patient__user',
+                                                  'doctor__specialization',
+                                                  'doctor__user')
 
     serializer_class = AppointmentSerializer
 
@@ -74,7 +82,7 @@ class FilterActiveAppointmentListView(generics.ListAPIView):
 
         return super().get_queryset().filter(patient_id=self.request.user.patient,
                                              doctor__specialization__id=specialization_id,
-                                             status='Активний')
+                                             status=StatusChoices.ACTIVE)
 
 
 @extend_schema(
@@ -84,15 +92,17 @@ class FilterActiveAppointmentListView(generics.ListAPIView):
 class UnconfirmedAppointmentListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
 
-    queryset = Appointment.objects.all().select_related('patient__card').\
-        select_related('doctor__specialization').\
-        select_related('patient__user').select_related('doctor__user')
+    queryset = Appointment.objects.select_related('patient__card',
+                                                  'patient__user',
+                                                  'doctor__specialization',
+                                                  'doctor__user')
 
     serializer_class = AppointmentSerializer
 
     def get_queryset(self):
         if self.request.user.is_doctor:
-            return super().get_queryset().filter(doctor_id=self.request.user.doctor, status='Непідтверджений')
+            return super().get_queryset().filter(doctor_id=self.request.user.doctor,
+                                                 status=StatusChoices.UNCONFIRMED)
 
 
 @extend_schema(
@@ -106,7 +116,10 @@ class ActiveAppointmentView(APIView):
     def get(self, *args, **kwargs):
         appointment_id = self.request.parser_context.get('kwargs')['appointment_id']
 
-        appointment = Appointment.objects.get(id=appointment_id)
+        appointment = Appointment.objects.select_related('patient__card',
+                                                         'patient__user',
+                                                         'doctor__specialization',
+                                                         'doctor__user').get(id=appointment_id)
 
         if appointment:
             appointment_serializer = AppointmentSerializer(appointment)
@@ -121,12 +134,11 @@ class ActiveAppointmentView(APIView):
 )
 class CloseAppointmentView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Appointment.objects.all()
+    queryset = Appointment.objects.select_related('patient')
     serializer_class = CloseAppointmentSerializer
 
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         doctor = self.request.user.doctor
-        # new_status = self.request.data.get('status')
         appointment_id = self.request.parser_context.get('kwargs')['appointment_id']
         medical_history = self.request.data.get('medical_history')
         objective_status = self.request.data.get('objective_status')
@@ -137,10 +149,9 @@ class CloseAppointmentView(generics.UpdateAPIView):
         appointment = self.get_queryset().filter(id=appointment_id)
 
         if appointment:
-            if appointment.update(status='Завершений', medical_history=medical_history,
+            if appointment.update(status=StatusChoices.COMPLETED, medical_history=medical_history,
                                   objective_status=objective_status, diagnosis=diagnosis,
                                   examination=examination, recommendations=recommendations):
-
                 notification = Notification(appointment=appointment[0],
                                             patient=appointment[0].patient, title='Оцініть ваш візит',
                                             text=f'Дякуємо за візит до нашої поліклініки! '
@@ -167,13 +178,16 @@ class AvailableSlotsView(APIView):
     def get(self, *args, **kwargs):
         doctor_id = self.request.parser_context.get('kwargs')['doctor_id']
         date_str = self.request.parser_context.get('kwargs')['date']
+
         if not doctor_id or not date_str:
-            return Response({'Error': 'Doctor ID and date are required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Error': 'Doctor ID and date are required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
         try:
             doctor = Doctor.objects.get(id=doctor_id)
 
         except Doctor.DoesNotExist:
-            return Response({'Error': f'Doctor with ID {doctor_id} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'Error': f'Doctor with ID {doctor_id} does not exist.'},
+                            status=status.HTTP_404_NOT_FOUND)
 
         try:
             date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -202,7 +216,27 @@ class CreateAppointmentView(APIView):
 
         patient = Patient.objects.get(user=self.request.user)
 
-        return Response(patient.create_appointment(doctor_id=doctor_id, date=date, time=time))
+        check_another_appointment = Appointment.objects.filter(patient=patient, date=date, time=time)
+
+        if check_date_time(date, time):
+            doctor = Doctor.objects.get(id=doctor_id)
+            unavailable_times = doctor.unavailable_time.filter(date=date).values_list('time', flat=True)
+
+            if not check_another_appointment:
+                if time not in unavailable_times:
+                    patient.create_appointment(doctor=doctor, date=date, time=time)
+                    return Response(f'Appointment at {date} {time} has been created successfully',
+                                    status=status.HTTP_201_CREATED)
+                else:
+                    return Response(f'Error: time {time} on {date} has been marked by doctor as unavailable',
+                                    status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(f'Error: you already have another appointment at {time} on {date} to'
+                                f' {check_another_appointment.doctor.user.get_full_name()}',
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        else:
+            return Response('Date/time not valid', status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema(
@@ -219,9 +253,9 @@ class ConfirmAppointmentView(APIView):
         appointment = Appointment.objects.get(id=appointment_id)
 
         if appointment:
-            if appointment.status == "Непідтверджений":
+            if appointment.status == StatusChoices.UNCONFIRMED:
                 if user.is_doctor:
-                    appointment.status = 'Активний'
+                    appointment.status = StatusChoices.ACTIVE
                     appointment.save()
                     return Response(f'Appointment confirmed successfully', status=status.HTTP_200_OK)
                 else:
@@ -259,32 +293,34 @@ class CancelAppointmentView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
+"""
+DOCTORS
+"""
+
+
 @extend_schema(
-    tags=['Doctors']
+    tags=['Doctors'],
+    description="Set unavailable time in doctor's schedule",
 )
 class SetUnavailableTimeView(APIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = SetUnavailableTimeSerializer
 
     def post(self, *args, **kwargs):
-        date_to_set_unavailable = self.request.parser_context.get('kwargs')['date']
-        time_to_set_unavailable = self.request.parser_context.get('kwargs')['time']
+        date = self.request.parser_context.get('kwargs')['date']
+        time = self.request.parser_context.get('kwargs')['time']
 
-        if not date_to_set_unavailable or not time_to_set_unavailable:
-            return Response({'Error': 'Date and time are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if check_date_time(date, time):
+            doctor = Doctor.objects.get(user=self.request.user)
+            doctor.set_unavailable_time(date, time)
 
-        try:
-            date_to_cancel = datetime.strptime(date_to_set_unavailable, '%Y-%m-%d').date()
-
-        except ValueError:
-            return Response({'error': 'Invalid date format. Please use YYYY-MM-DD.'},
+            return Response(f'Time {date} {time} has been set unavailable',
+                            status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid date/time (you cannot set the time '
+                                      'earlier than the current time) or format. '
+                                      'Date/time must be in YYYY-MM-DD and HH:MM format'},
                             status=status.HTTP_400_BAD_REQUEST)
-
-        doctor = Doctor.objects.get(user=self.request.user)
-        doctor.set_unavailable_time(date_to_set_unavailable, time_to_set_unavailable)
-
-        return Response(f'Time {date_to_cancel} {time_to_set_unavailable} has been set unavailable',
-                        status=status.HTTP_200_OK)
 
 
 @extend_schema(
@@ -295,7 +331,9 @@ class SearchAPIView(generics.ListAPIView):
     permission_classes = (AllowAny,)
     search_fields = ['user__last_name', 'specialization__name']
     filter_backends = (filters.SearchFilter,)
-    queryset = Doctor.objects.all().select_related('user').select_related('specialization')
+    queryset = Doctor.objects.all().select_related('user', 'specialization').annotate(
+        rating=Coalesce(Avg('reviews__review_rating'), Value(0), output_field=FloatField()))
+
     serializer_class = DoctorListSerializer
 
 
@@ -317,7 +355,8 @@ class DoctorsListViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
     serializer_class = DoctorListSerializer
 
-    queryset = Doctor.objects.all().select_related('specialization').select_related('user')
+    queryset = Doctor.objects.select_related('user', 'specialization').annotate(
+        rating=Coalesce(Avg('reviews__review_rating'), Value(0), output_field=FloatField()))
 
 
 @extend_schema(
@@ -328,11 +367,13 @@ class DoctorView(APIView):
     permission_classes = (AllowAny,)
     serializer_class = DoctorListSerializer
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         doctor_id = self.request.parser_context.get('kwargs')['doctor_id']
 
-        doctor_info = Doctor.objects.select_related('user').select_related('specialization').get(id=doctor_id)
-        doctor_serializer = DoctorListSerializer(doctor_info)
+        doctor_info = Doctor.objects.select_related('user', 'specialization').annotate(
+            rating=Coalesce(Avg('reviews__review_rating'), Value(0), output_field=FloatField())).get(id=doctor_id)
+
+        doctor_serializer = DoctorListSerializer(doctor_info, context={'request': request})
 
         return Response(doctor_serializer.data, status=status.HTTP_200_OK)
 
@@ -340,20 +381,18 @@ class DoctorView(APIView):
 @extend_schema(
     tags=['Doctors'],
     description="Return list of all doctors filtered by specialization"
-
 )
 class FilterDoctors(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
-    model = Doctor
+    queryset = Doctor.objects.select_related('user', 'specialization').annotate(
+            rating=Coalesce(Avg('reviews__review_rating'), Value(0), output_field=FloatField()))
+
     serializer_class = DoctorListSerializer
 
     def get_queryset(self, *args, **kwargs):
         specialization_id = self.request.parser_context.get('kwargs')['specialization_id']
 
-        queryset = Doctor.objects.filter(specialization_id=specialization_id).\
-            select_related('user').select_related('specialization')
-
-        return queryset
+        return self.queryset.filter(specialization_id=specialization_id)
 
 
 class MediaCreateRetrieve(CreateModelMixin, RetrieveModelMixin, GenericViewSet):

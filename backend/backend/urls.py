@@ -24,9 +24,9 @@ urlpatterns = [
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    path('password-reset-confirm/<str:uid>/<str:token>', PasswordResetConfirmView.as_view(),
+    path('api/password-reset-confirm/<str:uid>/<str:token>', PasswordResetConfirmView.as_view(),
          name='password-reset-confirm'),
-    path('register-user-confirm/<str:uid>/<str:token>', ConfirmRegistrationView.as_view(),
+    path('api/register-user-confirm/<str:uid>/<str:token>', ConfirmRegistrationView.as_view(),
          name='register-user-confirm'),
     path('__debug__/', include('debug_toolbar.urls')),
 ]

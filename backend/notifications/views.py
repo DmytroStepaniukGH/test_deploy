@@ -1,11 +1,12 @@
-from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
-
-from notifications.models import Notification # noqa
-from notifications.serializers import NotificationSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from drf_spectacular.utils import extend_schema
+
+from notifications.models import Notification
+from notifications.serializers import NotificationSerializer
 
 
 @extend_schema(
@@ -14,7 +15,9 @@ from rest_framework.views import APIView
 )
 class NotificationsListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Notification.objects.order_by('-id').all()
+    queryset = Notification.objects.order_by('-id').\
+        select_related('appointment__doctor__user')
+
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
@@ -27,11 +30,14 @@ class NotificationsListView(generics.ListAPIView):
 )
 class UnreadNotificationsListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Notification.objects.order_by('-id').all()
+    queryset = Notification.objects.order_by('-id').\
+        select_related('appointment__doctor__user')
+
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
-        return super().get_queryset().filter(patient_id=self.request.user.patient, is_read=False)
+        return super().get_queryset().filter(patient_id=self.request.user.patient,
+                                             is_read=False)
 
 
 @extend_schema(
@@ -43,7 +49,8 @@ class CountUnreadNotificationsView(APIView):
     serializer_class = NotificationSerializer
 
     def get(self, request):
-        return Response({'count': Notification.objects.filter(patient_id=self.request.user.patient, is_read=False).count()},
+        return Response({'count': Notification.objects.filter(patient_id=self.request.user.patient,
+                                                              is_read=False).count()},
                         status=status.HTTP_202_ACCEPTED)
 
 

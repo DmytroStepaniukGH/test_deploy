@@ -1,9 +1,12 @@
 import os.path
 import uuid
+
 from datetime import datetime
 from django.db import models
 
-from accounts.models import User # noqa
+from accounts.models import User
+
+from users.choises import StatusChoices
 
 
 TIME_CHOICES = (
@@ -49,25 +52,9 @@ class Patient(models.Model):
     def __str__(self):
         return f'{self.user.get_full_name()}'
 
-    def create_appointment(self, doctor_id, date, time):
-        check_another_appointment = Appointment.objects.filter(patient=self, date=date, time=time)
-
-        if check_date_time(date, time):
-            doctor = Doctor.objects.get(id=doctor_id)
-            unavailable_times = doctor.unavailable_time.filter(date=date).values_list('time', flat=True)
-
-            if not check_another_appointment:
-                if time not in unavailable_times:
-                    appointment = Appointment(patient=self, doctor=doctor, date=date, time=time)
-                    appointment.save()
-                    return f'Appointment at {date} {time} has been created successfully'
-                else:
-                    raise f'Error: time {time} on {date} has been marked by doctor as unavailable'
-            else:
-                raise f'Error: you already have another appointment at {time} on {date}'
-
-        else:
-            raise 'Date/time not valid'
+    def create_appointment(self, doctor, date, time):
+        appointment = Appointment(patient=self, doctor=doctor, date=date, time=time)
+        appointment.save()
 
 
 class Specialization(models.Model):
@@ -151,7 +138,7 @@ class Appointment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     date = models.DateField(default=datetime.now)
     time = models.CharField(max_length=10, choices=TIME_CHOICES, default="09:00")
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default="Непідтверджений")
+    status = models.CharField(max_length=15, choices=StatusChoices.choices, default="Непідтверджений")
 
     medical_history = models.CharField(verbose_name='Анамнез захворювання',
                                        default='', blank=True, max_length=1000)

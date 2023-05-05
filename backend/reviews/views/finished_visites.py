@@ -1,14 +1,15 @@
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
-from rest_framework import status, filters, generics
+from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 
 from drf_spectacular.utils import extend_schema
 
-from users.models import Appointment, Doctor  # noqa
-from users.serializers import AppointmentSerializer  # noqa
+from users.models import Appointment
+from users.serializers import AppointmentSerializer
+
+from users.choises import StatusChoices
 
 
 @extend_schema(
@@ -16,13 +17,17 @@ from users.serializers import AppointmentSerializer  # noqa
     description="Return list of finished appointments for authorized doctor/patient"
 )
 class FinishedAppointmentsListView(generics.ListAPIView):
-    queryset = Appointment.objects.all()
+    queryset = Appointment.objects.select_related('doctor__user',
+                                                  'patient__card',
+                                                  'patient__user',
+                                                  'doctor__specialization')
     permission_classes = (IsAuthenticated,)
     authentication_classes = [TokenAuthentication, BasicAuthentication]
     serializer_class = AppointmentSerializer
 
     def get_queryset(self):
-        visit_status = 'Завершений'
+        visit_status = StatusChoices.COMPLETED
+
         if not self.request.user.is_doctor:
             return super().get_queryset().filter(
                 patient_id=self.request.user.patient,
@@ -36,11 +41,13 @@ class FinishedAppointmentsListView(generics.ListAPIView):
 
 @extend_schema(
     tags=['Appointments'],
-    description="Return filtered by specialization list of finished appointments for authorized patient"
+    description="Returns filtered by specialization list of finished appointments"
+                " for authorized patient"
 )
 class FilterFinishedAppointmentsListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Appointment.objects.all()
+
     serializer_class = AppointmentSerializer
 
     def get_queryset(self):
@@ -48,40 +55,7 @@ class FilterFinishedAppointmentsListView(generics.ListAPIView):
 
         return super().get_queryset().filter(patient_id=self.request.user.patient,
                                              doctor__specialization__id=specialization_id,
-                                             status='Завершений')
-
-    # permission_classes = (IsAuthenticated,)
-    # authentication_classes = [TokenAuthentication, BasicAuthentication]
-    # serializer_class = AppointmentSerializer
-    #
-    # def get_queryset(self):
-    #     specialization_id = self.request.parser_context.get('kwargs')['specialization_id']
-    #
-    #     return super().get_queryset().filter(patient_id=self.request.user.patient,
-    #                                          doctor__specialization__id=specialization_id,
-    #                                          status='Завершений')
-
-    # def get(self, request, *args, **kwargs):
-    #     patient = self.request.user.patient
-    #
-    #     if patient:
-    #         specialization_id = self.request.parser_context.get('kwargs')['specialization_id']
-    #         appointments = Appointment.objects.order_by('-date').filter(patient=patient,
-    #                                                                     doctor__specialization__id=specialization_id,
-    #                                                                     status='Завершений')
-    #         paginator = LimitOffsetPagination()
-    #         result_page = paginator.paginate_queryset(appointments, request)
-    #         serializer = AppointmentSerializer(result_page, many=True, context={'request': request})
-    #         response = Response(serializer.data, status=status.HTTP_200_OK)
-    #         return response
-
-    # appointments_serializer = AppointmentSerializer(results, many=True)
-    # return self.get_paginated_response(appointments_serializer.data)
-    # return Response(appointments_serializer.data, status=status.HTTP_200_OK)
-    #
-    # else:
-    #     return Response('Access denied: only patient can filter',
-    #                     status=status.HTTP_403_FORBIDDEN)
+                                             status=StatusChoices.COMPLETED)
 
 
 @extend_schema(
@@ -98,7 +72,7 @@ class PatientFinishedAppointmentsListView(generics.ListAPIView):
             patient_id = self.request.parser_context.get('kwargs')['patient_id']
 
             return super().get_queryset().order_by('-date').filter(patient_id=patient_id,
-                                                                   status='Завершений')
+                                                                   status=StatusChoices.COMPLETED)
 
 
 @extend_schema(
@@ -107,7 +81,11 @@ class PatientFinishedAppointmentsListView(generics.ListAPIView):
 )
 class FilterPatientFinishedAppointmentsListView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Appointment.objects.all().prefetch_related('patient').prefetch_related('doctor')
+    queryset = Appointment.objects.select_related('doctor__user',
+                                                  'patient__card',
+                                                  'patient__user',
+                                                  'doctor__specialization')
+
     serializer_class = AppointmentSerializer
 
     def get_queryset(self):
@@ -117,7 +95,7 @@ class FilterPatientFinishedAppointmentsListView(generics.ListAPIView):
 
             return super().get_queryset().order_by('-date').filter(patient_id=patient_id,
                                                                    doctor__specialization__id=specialization_id,
-                                                                   status='Завершений')
+                                                                   status=StatusChoices.COMPLETED)
 
 
 @extend_schema(
@@ -125,14 +103,17 @@ class FilterPatientFinishedAppointmentsListView(generics.ListAPIView):
     description="Return single appointment for authorized doctor/patient"
 )
 class FinishedAppointmentView(APIView):
-    queryset = Appointment.objects.all()
+    queryset = Appointment.objects.select_related('doctor__user',
+                                                  'patient__card',
+                                                  'patient__user',
+                                                  'doctor__specialization')
     permission_classes = (IsAuthenticated,)
     authentication_classes = [TokenAuthentication, BasicAuthentication]
     serializer_class = AppointmentSerializer
 
     def get(self, *args, **kwargs):
         appointment_id = self.request.parser_context.get('kwargs')['appointment_id']
-        appointment_info = Appointment.objects.get(id=appointment_id)
+        appointment_info = self.queryset.get(id=appointment_id)
         appointment_serializer = AppointmentSerializer(appointment_info)
 
         return Response(appointment_serializer.data, status=status.HTTP_200_OK)

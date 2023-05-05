@@ -1,6 +1,7 @@
 from django.urls import path
 
-from notifications.views import NotificationsListView, CountUnreadNotificationsView, UnreadNotificationsListView, ToggleNotificationStatus
+from notifications.views import NotificationsListView, CountUnreadNotificationsView, \
+    UnreadNotificationsListView, ToggleNotificationStatus
 
 
 urlpatterns = [

@@ -6,8 +6,8 @@ from rest_framework import status
 
 from drf_spectacular.utils import extend_schema
 
-from accounts.serializers.account_info import AccountSerializer # noqa
-from accounts.models import User # noqa
+from accounts.serializers.account_info import AccountSerializer
+from accounts.models import User
 
 
 @extend_schema(
@@ -21,8 +21,8 @@ class AccountView(RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         user_id = self.request.parser_context.get('kwargs')['user_id']
-        if int(user_id) == self.request.user.pk:
-            account = User.objects.get(id=user_id)
+        if user_id == self.request.user.pk:
+            account = User.objects.select_related('patient__card').get(id=user_id)
             account_serializer = AccountSerializer(account)
             return Response(account_serializer.data, status=status.HTTP_200_OK)
         else:

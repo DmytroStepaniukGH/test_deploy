@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from users.models import Appointment, Doctor, DoctorUnavailableTime, Specialization, Media
-from reviews.models import Review # noqa
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
@@ -16,7 +15,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = (
             'id',
-            #'user_id',
             'date',
             'time',
             'price',
@@ -52,16 +50,13 @@ class DoctorListSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='user.last_name')
     first_name = serializers.CharField(source='user.first_name')
     patronim_name = serializers.CharField(source='user.patronim_name')
+    profile_image = serializers.SerializerMethodField()
     email = serializers.CharField(source='user.email')
     specialization = serializers.CharField(source='specialization.name')
-    rating = serializers.SerializerMethodField('get_average_rating')
-
-    def get_average_rating(self, obj):
-        reviews_rating = Review.objects.filter(doctor_id=obj.id).values_list('review_rating', flat=True)
-        rating_avg = 0
-        if reviews_rating:
-            rating_avg = round(sum(reviews_rating) / len(reviews_rating), 2)
-        return rating_avg
+    education = serializers.SerializerMethodField()
+    courses = serializers.SerializerMethodField()
+    procedures_performed = serializers.SerializerMethodField()
+    rating = serializers.FloatField()
 
     class Meta:
         model = Doctor
@@ -82,6 +77,20 @@ class DoctorListSerializer(serializers.ModelSerializer):
             'procedures_performed',
             'rating',
         )
+
+    def get_profile_image(self, doctor_info):
+        request = self.context.get('request')
+        profile_image_url = doctor_info.profile_image.url
+        return request.build_absolute_uri(profile_image_url)
+
+    def get_education(self, obj):
+        return obj.education.split('\\n')
+
+    def get_courses(self, obj):
+        return obj.courses.split('\\n')
+
+    def get_procedures_performed(self, obj):
+        return obj.procedures_performed.split('\\n')
 
 
 class SpecializationsSerializer(serializers.ModelSerializer):
