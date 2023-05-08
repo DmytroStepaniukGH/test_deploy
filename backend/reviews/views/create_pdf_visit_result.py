@@ -1,17 +1,19 @@
 import io
 
 from django.http import FileResponse
+
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 
 from drf_spectacular.utils import extend_schema
 
-from users.models import Appointment, Doctor # noqa
-from users.serializers import AppointmentSerializer # noqa
+from users.models import Appointment
+from users.serializers import AppointmentSerializer
 
 
 @extend_schema(
@@ -26,12 +28,15 @@ class CreatePdfVisitResults(GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         appointment_id = self.request.parser_context.get('kwargs')['appointment_id']
-        appointment_info = Appointment.objects.get(id=appointment_id)
+        appointment_info = Appointment.objects.select_related('patient__user',
+                                                              'patient__card',
+                                                              'doctor__user',
+                                                              'doctor__specialization').get(id=appointment_id)
+
         appointment_serializer = AppointmentSerializer(appointment_info)
         appointment_data = appointment_serializer.data
 
         filename = f'{appointment_info.patient} - {appointment_info.doctor.user.get_full_name()}.pdf'
-        print(filename)
 
         buffer = io.BytesIO()
         pdf_object = canvas.Canvas(buffer)

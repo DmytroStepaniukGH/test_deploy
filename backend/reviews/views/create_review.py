@@ -1,15 +1,16 @@
-import datetime
-
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import BasicAuthentication, TokenAuthentication
 from rest_framework.response import Response
 from rest_framework import status
+
 from drf_spectacular.utils import extend_schema
 
-from reviews.serializers.create_review import CreateReviewSerializer # noqa
-from reviews.models import Review # noqa
-from users.models import Appointment # noqa
+from reviews.serializers.create_review import CreateReviewSerializer
+from reviews.models import Review
+
+from users.models import Appointment
+from users.choises import StatusChoices
 
 
 @extend_schema(
@@ -25,10 +26,11 @@ class CreateReviewView(CreateAPIView):
         appointment_id = self.request.parser_context.get('kwargs')['appointment_id']
         appointment = Appointment.objects.get(id=appointment_id)
 
-        if appointment.status == 'Завершений':
+        if appointment.status == StatusChoices.COMPLETED:
             try:
                 review = Review.objects.get(appointment_id=appointment_id)
                 return Response(status=status.HTTP_409_CONFLICT)
+
             except Review.DoesNotExist:
                 serializer = self.get_serializer(data=request.data)
                 serializer.is_valid(raise_exception=True)

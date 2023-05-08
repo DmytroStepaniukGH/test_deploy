@@ -6,9 +6,9 @@ from rest_framework import status
 
 from drf_spectacular.utils import extend_schema
 
-from patientcard.serializers.patientcard_edit import PatientCardEditSerializer # noqa
-from patientcard.models import PatientCard # noqa
-from users.models import Patient # noqa
+from patientcard.serializers.patientcard_edit import PatientCardEditSerializer
+from patientcard.models import PatientCard
+from users.models import Patient
 
 
 @extend_schema(

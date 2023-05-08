@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from users.models import Appointment, Doctor, DoctorUnavailableTime, Specialization, Media
+from users.models import Appointment, Doctor, DoctorUnavailableTime, Specialization
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
@@ -136,13 +136,3 @@ class CreateAppointmentSerializer(serializers.ModelSerializer):
             'date',
             'time',
         )
-
-
-class MediaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Media
-        fields = (
-            'id',
-            'file',
-        )
-        read_only_fields = ('id',)

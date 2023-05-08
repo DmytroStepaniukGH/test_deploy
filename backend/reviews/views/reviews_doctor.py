@@ -3,8 +3,8 @@ from rest_framework.permissions import AllowAny
 
 from drf_spectacular.utils import extend_schema
 
-from reviews.models import Review # noqa
-from reviews.serializers.reviews_doctor import DoctorReviewListSerializer # noqa
+from reviews.models import Review
+from reviews.serializers.reviews_doctor import DoctorReviewListSerializer
 
 
 @extend_schema(
@@ -15,7 +15,7 @@ class DoctorReviewListView(ListAPIView):
     permission_classes = (AllowAny,)
     authentication_classes = []
     serializer_class = DoctorReviewListSerializer
-    queryset = Review.objects.all()
+    queryset = Review.objects.select_related('appointment', 'appointment__patient__user')
 
     def get_queryset(self):
         doctor_id = self.request.parser_context.get('kwargs')['doctor_id']
@@ -24,5 +24,3 @@ class DoctorReviewListView(ListAPIView):
         )
 
         return queryset_filter
-
-

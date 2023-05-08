@@ -1,6 +1,3 @@
-import os.path
-import uuid
-
 from datetime import datetime
 from django.db import models
 
@@ -30,12 +27,6 @@ TIME_CHOICES = (
     ("17:30", "17:30"),
 )
 
-STATUS_CHOICES = (
-    ("Непідтверджений", "Непідтверджений"),
-    ("Активний", "Активний"),
-    ("Завершений", "Завершений"),
-)
-
 SPECIALIZATION_CHOICES = (
     ("Дерматолог", "Дерматолог"),
     ("Кардіолог", "Кардіолог"),
@@ -58,7 +49,8 @@ class Patient(models.Model):
 
 
 class Specialization(models.Model):
-    name = models.CharField(max_length=30, choices=SPECIALIZATION_CHOICES, default="Не обрано")
+    name = models.CharField(max_length=30, choices=SPECIALIZATION_CHOICES,
+                            default="Не обрано")
     image = models.FileField(verbose_name='Зображення спеціальності',
                              upload_to='specialization_images',
                              default='Cardiologist.svg')
@@ -73,11 +65,13 @@ class Doctor(models.Model):
                                       upload_to='doctor_profile_photo',
                                       default="doctor_profile_photo/default_image.png",
                                       blank=True)
-    specialization = models.ForeignKey(Specialization, on_delete=models.RESTRICT, related_name='specialization')
+    specialization = models.ForeignKey(Specialization, on_delete=models.RESTRICT,
+                                       related_name='specialization')
     price = models.IntegerField(verbose_name='Вартість прийому')
     experience = models.CharField(verbose_name='Стаж', max_length=20)
     category = models.CharField(verbose_name='Категорія', max_length=30)
-    info = models.CharField(verbose_name='Загальна нформація про лікаря', max_length=1000, blank=True)
+    info = models.CharField(verbose_name='Загальна нформація про лікаря',
+                            max_length=1000, blank=True)
     education = models.CharField(verbose_name='Освіта', default='', max_length=1000)
     courses = models.CharField(verbose_name='Курси', default='', max_length=1000, blank=True)
     procedures_performed = models.CharField(verbose_name='Виконувані процедури', default='',
@@ -124,50 +118,43 @@ class Doctor(models.Model):
         unavailable_time.save()
 
     def __str__(self):
-        return f'{self.user.get_full_name()} / {self.specialization} / Email: {self.user.email} '
+        return f'{self.user.get_full_name()} / {self.specialization}' \
+               f' / Email: {self.user.email} '
 
 
 class DoctorUnavailableTime(models.Model):
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='unavailable_time')
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,
+                               related_name='unavailable_time')
     date = models.DateField(default=datetime.now)
-    time = models.CharField(max_length=10, choices=TIME_CHOICES, default="09:00")
+    time = models.CharField(max_length=10, choices=TIME_CHOICES,
+                            default="09:00")
 
 
 class Appointment(models.Model):
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='appointments')
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,
+                               related_name='appointments')
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     date = models.DateField(default=datetime.now)
     time = models.CharField(max_length=10, choices=TIME_CHOICES, default="09:00")
-    status = models.CharField(max_length=15, choices=StatusChoices.choices, default="Непідтверджений")
+    status = models.CharField(max_length=15, choices=StatusChoices.choices,
+                              default=StatusChoices.UNCONFIRMED)
 
     medical_history = models.CharField(verbose_name='Анамнез захворювання',
                                        default='', blank=True, max_length=1000)
     objective_status = models.CharField(verbose_name="Об'єктивний статус",
                                         default='', blank=True, max_length=1000)
     diagnosis = models.CharField(verbose_name='Діагноз',
-                                        default='', blank=True, max_length=500)
+                                 default='', blank=True, max_length=500)
     examination = models.CharField(verbose_name='Обстеження',
-                                        default='', blank=True, max_length=1000)
+                                   default='', blank=True, max_length=1000)
     recommendations = models.CharField(verbose_name='Рекомендації',
-                                        default='', blank=True, max_length=1000)
+                                       default='', blank=True, max_length=1000)
 
     class Meta:
         unique_together = ('doctor', 'date', 'time')
 
     def __str__(self):
         return f'{self.patient} запис до {self.doctor} {self.date} о {self.time}'
-
-
-class Media(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    file = models.FileField(upload_to='media/doctor_profile_photo')
-    created_by = models.ForeignKey(Doctor, related_name='created_photo', on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f'Photo_{self.id}'
-
-    def get_filename(self):
-        return os.path.basename(self.file.name)
 
 
 def check_date_time(date, time):

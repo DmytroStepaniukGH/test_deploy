@@ -1,8 +1,6 @@
 from rest_framework import serializers
 
-from patientcard.models import PatientCard # noqa
-from accounts.models import User # noqa
-from users.models import Appointment # noqa
+from patientcard.models import PatientCard
 
 
 class PatientCardInfoSerializer(serializers.Serializer):

@@ -5,10 +5,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
-from accounts.serializers.registration import RegistrationSerializer # noqa
-from accounts.serializers.registration import ConfirmRegistrationSerializer # noqa
-from accounts.tasks import send_email_for_registration_confirm # noqa
-from accounts.models import User # noqa
+from accounts.serializers.registration import RegistrationSerializer
+from accounts.serializers.registration import ConfirmRegistrationSerializer
+from accounts.tasks import send_email_for_registration_confirm
+from accounts.models import User
 
 
 @extend_schema(

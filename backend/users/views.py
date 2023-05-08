@@ -2,25 +2,22 @@ from datetime import datetime
 
 from django.db.models import Avg, Value, FloatField
 from django.db.models.functions import Coalesce
+
 from drf_spectacular.utils import extend_schema
 
 from rest_framework import generics, status, viewsets, filters
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
-from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet
 
-from users.models import Appointment, Doctor, Patient, Specialization, Media
+from users.models import Appointment, Doctor, Patient, Specialization
 from users.serializers import AppointmentSerializer, DoctorListSerializer, SpecializationsSerializer, \
-    SetUnavailableTimeSerializer, CreateAppointmentSerializer, MediaSerializer, CloseAppointmentSerializer
+    SetUnavailableTimeSerializer, CreateAppointmentSerializer, CloseAppointmentSerializer
+from users.models import check_date_time
+from users.choises import StatusChoices
 
 from notifications.models import Notification
 
-from users.models import check_date_time
-
-from users.choises import StatusChoices
 
 """
 APPOINTMENTS
@@ -59,9 +56,11 @@ class ActiveAppointmentListView(generics.ListAPIView):
 
     def get_queryset(self):
         if self.request.user.is_doctor:
-            return super().get_queryset().filter(doctor_id=self.request.user.doctor.id, status=StatusChoices.ACTIVE)
+            return super().get_queryset().filter(doctor_id=self.request.user.doctor.id,
+                                                 status=StatusChoices.ACTIVE)
 
-        return super().get_queryset().filter(patient_id=self.request.user.patient.id, status=StatusChoices.ACTIVE)
+        return super().get_queryset().filter(patient_id=self.request.user.patient.id,
+                                             status=StatusChoices.ACTIVE)
 
 
 @extend_schema(
@@ -371,7 +370,8 @@ class DoctorView(APIView):
         doctor_id = self.request.parser_context.get('kwargs')['doctor_id']
 
         doctor_info = Doctor.objects.select_related('user', 'specialization').annotate(
-            rating=Coalesce(Avg('reviews__review_rating'), Value(0), output_field=FloatField())).get(id=doctor_id)
+            rating=Coalesce(Avg('reviews__review_rating'), Value(0),
+                            output_field=FloatField())).get(id=doctor_id)
 
         doctor_serializer = DoctorListSerializer(doctor_info, context={'request': request})
 
@@ -393,13 +393,3 @@ class FilterDoctors(viewsets.ReadOnlyModelViewSet):
         specialization_id = self.request.parser_context.get('kwargs')['specialization_id']
 
         return self.queryset.filter(specialization_id=specialization_id)
-
-
-class MediaCreateRetrieve(CreateModelMixin, RetrieveModelMixin, GenericViewSet):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = MediaSerializer
-    parser_classes = (MultiPartParser,)
-    queryset = Media.objects.select_related('created_by').all()
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user.doctor)
