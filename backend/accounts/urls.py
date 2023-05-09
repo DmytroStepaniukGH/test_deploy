@@ -1,11 +1,11 @@
 from django.urls import path
 
-from accounts.views.password_reset import PasswordResetRequestView, PasswordResetConfirmView # noqa
-from accounts.views.registration import RegistrationView, ConfirmRegistrationView # noqa
-from accounts.views.login import LoginView # noqa
-from accounts.views.logout import LogoutView # noqa
-from accounts.views.account_info import AccountView # noqa
-from accounts.views.account_edit import AccountEditView, AccountPasswordEditView # noqa
+from accounts.views.password_reset import PasswordResetRequestView, PasswordResetConfirmView
+from accounts.views.registration import RegistrationView, ConfirmRegistrationView
+from accounts.views.login import LoginView
+from accounts.views.logout import LogoutView
+from accounts.views.account_info import AccountView
+from accounts.views.account_edit import AccountEditView, AccountPasswordEditView
 
 app_name = 'accounts'
 
