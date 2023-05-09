@@ -6,11 +6,11 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils import timezone
 from django.core.mail import send_mail
 
-from accounts.utils import encode_uid # noqa
-from backend.celery import app # noqa
-from accounts.utils import encode_uid # noqa
-from backend.celery import app # noqa
-from backend.settings import EMAIL_HOST_USER # noqa
+from accounts.utils import encode_uid
+from backend.celery import app
+from accounts.utils import encode_uid
+from backend.celery import app
+from backend.settings import EMAIL_HOST_USER
 
 
 @app.task()
