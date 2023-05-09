@@ -8,7 +8,7 @@ class AccountSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
     patronim_name = serializers.CharField(max_length=150)
-    birth_date = serializers.CharField(max_length=8)
+    birth_date = serializers.CharField(max_length=10)
     sex = serializers.CharField()
     email = serializers.EmailField()
     phone_num = serializers.CharField(max_length=13)
