@@ -6,8 +6,8 @@ from rest_framework import status
 
 from drf_spectacular.utils import extend_schema
 
-from accounts.serializers.account_edit import AccountEditSerializer, AccountPasswordEditSerializer # noqa
-from accounts.models import User # noqa
+from accounts.serializers.account_edit import AccountEditSerializer, AccountPasswordEditSerializer
+from accounts.models import User
 
 
 @extend_schema(
