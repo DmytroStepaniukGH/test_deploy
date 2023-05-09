@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from accounts.utils import decode_uid # noqa
+from accounts.utils import decode_uid
 
 
 class LoginSerializer(serializers.Serializer):
