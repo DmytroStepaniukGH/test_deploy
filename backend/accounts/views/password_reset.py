@@ -5,9 +5,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
-from accounts.serializers.password_reset import RequestPasswordResetSerializer # noqa
-from accounts.serializers.password_reset import ConfirmPasswordResetSerializer # noqa
-from accounts.tasks import send_email_for_password_reset # noqa
+from accounts.serializers.password_reset import RequestPasswordResetSerializer
+from accounts.serializers.password_reset import ConfirmPasswordResetSerializer
+from accounts.tasks import send_email_for_password_reset
 
 
 @extend_schema(
