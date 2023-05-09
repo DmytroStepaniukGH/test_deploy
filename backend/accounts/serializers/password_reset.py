@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 
-from accounts.utils import decode_uid # noqa
+from accounts.utils import decode_uid
 
 
 class RequestPasswordResetSerializer(serializers.Serializer):
