@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from accounts.models import User # noqa
+from accounts.models import User 
 
 
-class AccountSerializer(serializers.Serializer):
+class AccountSerializer(serializers.ModelSerializer):
 
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
