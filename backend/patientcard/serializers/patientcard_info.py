@@ -3,7 +3,7 @@ from rest_framework import serializers
 from patientcard.models import PatientCard
 
 
-class PatientCardInfoSerializer(serializers.Serializer):
+class PatientCardInfoSerializer(serializers.ModelSerializer):
     card_id = serializers.IntegerField()
     patient = serializers.CharField()
     birth_date = serializers.CharField(source='patient.user.birth_date')
