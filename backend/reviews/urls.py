@@ -1,10 +1,14 @@
 from django.urls import path
 
-from reviews.views.finished_visites import FinishedAppointmentsListView, PatientFinishedAppointmentsListView, \
-    FilterFinishedAppointmentsListView, FilterPatientFinishedAppointmentsListView  # noqa
-from reviews.views.finished_visites import FinishedAppointmentView # noqa
-from reviews.views.create_review import CreateReviewView # noqa
-from reviews.views.create_pdf_visit_result import CreatePdfVisitResults # noqa
+from reviews.views.finished_visites import (
+    FinishedAppointmentsListView, 
+    PatientFinishedAppointmentsListView,
+    FilterFinishedAppointmentsListView, 
+    FilterPatientFinishedAppointmentsListView,
+)
+from reviews.views.finished_visites import FinishedAppointmentView
+from reviews.views.create_review import CreateReviewView
+from reviews.views.create_pdf_visit_result import CreatePdfVisitResults
 
 urlpatterns = [
     path('finished/', FinishedAppointmentsListView.as_view(), name='finished-appointments'),
