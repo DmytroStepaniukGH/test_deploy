@@ -3,7 +3,7 @@ from rest_framework import serializers
 from patientcard.models import PatientCard
 
 
-class PatientCardEditSerializer(serializers.Serializer):
+class PatientCardEditSerializer(serializers.ModelSerializer):
     traumas_info = serializers.CharField()
     operations_info = serializers.CharField()
     chronical_illness_info = serializers.CharField()
