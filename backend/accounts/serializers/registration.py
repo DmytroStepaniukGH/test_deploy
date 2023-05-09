@@ -4,12 +4,12 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 
-from accounts.utils import decode_uid # noqa
+from accounts.utils import decode_uid 
 
 UserModel = get_user_model()
 
 
-class RegistrationSerializer(serializers.Serializer):
+class RegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
     first_name = serializers.CharField()
     last_name = serializers.CharField()
@@ -30,7 +30,7 @@ class RegistrationSerializer(serializers.Serializer):
 
     class Meta:
         model = UserModel
-        fields = ("id", "email", "password", 'first_name', 'last_name', 'phone_num')
+        fields = ('id', 'email', 'password', 'first_name', 'last_name', 'phone_num')
 
 
 class ConfirmRegistrationSerializer(serializers.Serializer):
