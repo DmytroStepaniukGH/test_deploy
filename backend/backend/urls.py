@@ -7,8 +7,8 @@ from django.conf.urls.static import static
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
-from accounts.views.password_reset import PasswordResetConfirmView # noqa
-from accounts.views.registration import ConfirmRegistrationView # noqa
+from accounts.views.password_reset import PasswordResetConfirmView
+from accounts.views.registration import ConfirmRegistrationView
 
 api = [
     path('', include('users.urls')),
