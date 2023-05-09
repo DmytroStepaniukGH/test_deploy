@@ -35,8 +35,6 @@ class AccountEditSerializer(serializers.ModelSerializer):
         )
 
 
-
-
 class AccountPasswordEditSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
