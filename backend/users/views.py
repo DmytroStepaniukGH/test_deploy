@@ -5,18 +5,20 @@ from django.db.models.functions import Coalesce
 
 from drf_spectacular.utils import extend_schema
 
+from notifications.models import Notification
+
 from rest_framework import generics, status, viewsets, filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.models import Appointment, Doctor, Patient, Specialization
-from users.serializers import AppointmentSerializer, DoctorListSerializer, SpecializationsSerializer, \
-    SetUnavailableTimeSerializer, CreateAppointmentSerializer, CloseAppointmentSerializer
+from users.serializers import (AppointmentSerializer, DoctorListSerializer,
+                               SpecializationsSerializer, SetUnavailableTimeSerializer,
+                               CreateAppointmentSerializer, CloseAppointmentSerializer)
+
 from users.models import check_date_time
 from users.choises import StatusChoices
-
-from notifications.models import Notification
 
 
 """
