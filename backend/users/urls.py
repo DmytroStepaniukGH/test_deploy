@@ -1,10 +1,14 @@
 from django.urls import path
-from users.views import CreateAppointmentView, AppointmentListView, AvailableSlotsView, AllSpecializations, \
-    DoctorsListViewSet, SearchAPIView, FilterDoctors, CancelAppointmentView, SetUnavailableTimeView, \
-    CloseAppointmentView, DoctorView, ActiveAppointmentListView, ActiveAppointmentView, \
-    ConfirmAppointmentView, UnconfirmedAppointmentListView, FilterActiveAppointmentListView
 
 from reviews.views.reviews_doctor import DoctorReviewListView
+
+from users.views import (CreateAppointmentView, AppointmentListView,
+                         AvailableSlotsView, AllSpecializations, 
+                         DoctorsListViewSet, SearchAPIView, FilterDoctors,
+                         CancelAppointmentView, SetUnavailableTimeView, 
+                         CloseAppointmentView, DoctorView, ActiveAppointmentListView,
+                         ActiveAppointmentView, ConfirmAppointmentView, 
+                         UnconfirmedAppointmentListView, FilterActiveAppointmentListView)
 
 urlpatterns = [
     path('appointments/', AppointmentListView.as_view(), name='appointments'),
